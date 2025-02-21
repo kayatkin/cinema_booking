@@ -22,9 +22,6 @@ Route::get('/payments/{payment}', [ClientController::class, 'showPayment'])->nam
 // Страница просмотра билета
 Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('clients.tickets.show');
 
-// Стандартные маршруты аутентификации Laravel UI
-Auth::routes();
-
 // Маршруты для администраторов
 // Страница входа для администратора
 Route::get('/admin/login', [AdminController::class, 'showLoginForm'])->name('admin.login');

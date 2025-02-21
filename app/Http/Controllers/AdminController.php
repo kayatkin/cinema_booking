@@ -51,7 +51,7 @@ class AdminController extends Controller
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
-    return redirect()->route('admin.login'); // Всегда на страницу логина
+    return redirect()->route('admin.login');
 }
 
 public function index()
