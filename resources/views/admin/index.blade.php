@@ -239,6 +239,19 @@
                 </button>
             </div>
         </section>
+        <!-- Выход из администраторской -->
+        <section class="conf-step">
+            <header class="conf-step__header conf-step__header_opened">
+                <h2 class="conf-step__title">Выход из администраторской</h2>
+            </header>
+            <div class="conf-step__wrapper text-center">
+                <!-- Кнопка выхода -->
+                <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">
+                @csrf <!-- Добавляем CSRF токен -->
+                <button type="submit" class="conf-step__button conf-step__button-regular">Выход</button>
+                </form>
+            </div>
+        </section>
     </main>
     @include('admin.partials.edit_movie_modal')
     @include('admin.partials.create_hall_modal')
