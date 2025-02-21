@@ -1,66 +1,159 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# **ИдёмВКино — Система бронирования билетов в кинотеатр**
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## **Описание проекта**
+Система бронирования билетов в кинотеатр с клиентской и администраторской частями. Пользователи могут выбирать фильмы, сеансы, места в зале, получать электронные билеты и QR-коды для показа контроллеру. Администраторы управляют залами, фильмами, сеансами и ценами.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## **Структура проекта**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### **Клиентская часть**
+#### Файлы представлений:
+1. **`views/clients/index.blade.php`**  
+   Главный интерфейс клиента для выбора фильмов и сеансов.
+2. **`views/clients/select_seat.blade.php`**  
+   Интерфейс для выбора мест в зале.
+3. **`views/clients/payments/show.blade.php`**  
+   Подтверждение бронирования
+4. **`views/tickets/show.blade.php`**  
+   Электронный билет на сеанс с QR-кодом.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+#### Основной функционал:
+- Выбор фильма и сеанса.
+- Выбор доступных мест.
+- Подтверждение бронирования.
+- Получение электронного билета.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### **Администраторская часть**
+#### Файлы представлений:
+1. **`views/admin/index.blade.php`**  
+   Главная страница админки для управления залами, фильмами, сеансами и ценами.
+2. **`views/admin/login.blade.php`**  
+   Форма входа для администраторов.
+3. **Модальные окна**:
+   - **`create_hall_modal.blade.php`**: Создание нового зала.
+   - **`create_movie_modal.blade.php`**: Добавление нового фильма.
+   - **`edit_movie_modal.blade.php`**: Редактирование существующего фильма.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+#### Основной функционал:
+- Управление залами: создание, редактирование, удаление.
+- Настройка конфигурации залов (ряды, типы мест).
+- Управление фильмами: добавление, редактирование, удаление.
+- Настройка сеансов через перетаскивание на таймлайн.
+- Конфигурация цен для разных типов мест.
+- Переключение статуса продаж билетов.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## **Технические требования**
+- PHP >= 8.0
+- Laravel Framework
+- SQLite
+- Composer
+- Node.js и npm
+- QR-коды: Генерация через библиотеку `phpqrcode`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## **Основные маршруты**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### **Клиентская часть**
+- `/clients/index`: Главная страница с выбором фильмов и сеансов.
+- `/clients/select_seat/{seance_id}`: Выбор мест в зале.
+- `/clients/payments/show/{payment}`: Подтверждение бронирования.
+- `/tickets/show`: Электронный билет.
 
-## Contributing
+### **Администраторская часть**
+- `/admin/login`: Вход для администраторов.
+- `/admin/index`: Главная страница админки.
+- `/admin/halls/*`: Управление залами.
+- `/admin/movies/*`: Управление фильмами.
+- `/admin/seances/*`: Настройка сеансов.
+- `/admin/toggle-sales`: Переключение статуса продаж билетов.
+- `/admin/logout`: Выход из админки.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## **Основные компоненты**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### **Контроллеры**
+1. **`AdminController`**  
+   - Аутентификация администраторов.
+   - Управление залами, фильмами, сеансами и ценами.
+2. **`ClientController`**  
+   - Отображение списка сеансов.
+   - Выбор мест и подтверждение бронирования.
+3. **`PaymentController`**  
+   - Создание платежей и билетов.
+   - Генерация QR-кодов.
+4. **`TicketController`**  
+   - Отображение электронного билета
 
-## Security Vulnerabilities
+### **Модели**
+1. **`Hall`**  
+   Хранит информацию о залах.
+2. **`Movie`**  
+   Хранит данные о фильмах.
+3. **`SeancesMovie`**  
+   Хранит информацию о сеансах.
+4. **`Ticket`**  
+   Хранит данные о билетах и их статусах.
+5. **`Payment`**  
+   Хранит информацию о платежах.
+6. **`HallPricing`**  
+   Хранит информацию о ценах.
+7. **`HallConfiguration`**
+    Хранит информацию о конфигурации зала.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## **JavaScript-функционал**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### **Администраторская часть**
+1. **`hall_config.js`**  
+   - Управление конфигурацией залов (количество рядов, типы мест).
+2. **`hall_pricing.js`**  
+   - Управление ценами на места.
+3. **`seances.js`**  
+   - Настройка сеансов через перетаскивание фильмов на таймлайн.
+4. **`toggleSales.js`**  
+   - Переключение статуса продаж билетов.
+5. **`admin.js`**  
+   - обеспечивает функциональность для админки
+6. **`hall.js`**  
+   - Создание, удаление зала.
+7. **`movies`**  
+   - Создание, редактирование, удаление фильмов.
+
+---
+
+### **Клиентская часть**
+1. **`seat-selection.js`**  
+   - Выбор мест в зале.
+
+---
+
+## **Пример использования**
+
+### **Клиентская часть**
+1. Пользователь выбирает фильм и сеанс на главной странице (`/clients/index`).
+2. Переходит на страницу выбора мест (`/clients/select_seat/{seance_id}`).
+3. После выбора мест, система бронирует места (`/clients/payments/show/{payment}`).
+4. После оплаты, пользователь получает электронный билет (`/tickets/show`).
+
+### **Администраторская часть**
+1. Администратор заходит в систему (`/admin/login`).
+2. Создает новый зал, настраивает его конфигурацию и цены.
+3. Добавляет фильмы и планирует сеансы через таймлайн.
+4. Открывает или приостанавливает продажу билетов.
+5. Выходит из админки
+
+---
+
+## **Автор**
+- **[Каяткин Виктор]**  
+  Разработчик проекта.
+
+--- 
