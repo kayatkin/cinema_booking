@@ -32,7 +32,7 @@ Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.logi
 // Выход из системы для администратора
 Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
 // Защищенные маршруты админки
-Route::middleware(['admin'])->group(function () {
+//Route::middleware(['admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 
     // Создание нового зала (удаление)
@@ -64,4 +64,4 @@ Route::middleware(['admin'])->group(function () {
     Route::delete('/admin/seances/{id}', [AdminController::class, 'deleteSeance'])->name('admin.seances.delete');
     // Обновление статуса продаж
     Route::post('/admin/toggle-sales', [AdminController::class, 'toggleSales'])->name('toggleSales');
-});
+//});

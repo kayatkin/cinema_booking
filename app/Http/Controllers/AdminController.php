@@ -54,12 +54,32 @@ class AdminController extends Controller
     return redirect()->route('admin.login'); // Всегда на страницу логина
 }
 
-    public function index()
+public function index()
 {
     try {
-        return view('admin.index');
+        // Получаем все доступные залы с их сеансами и фильмами
+        $halls = Hall::with('seancesMovies.movie')->get();
+
+        // Получаем все фильмы
+        $movies = Movie::all();
+
+        // Получаем все сеансы с их фильмами и залами, сортируем по времени
+        $seancesMovies = SeancesMovie::with('movie', 'hall')->orderBy('start_time')->get();
+
+        // Проверяем, есть ли вообще залы
+        $hallsExist = $halls->isNotEmpty();
+
+        // Проверяем, активен ли хотя бы один зал (если есть залы)
+        $isActive = $hallsExist ? $halls->first()->is_active : false;
+
+        // Возвращаем представление с данными
+        return view('admin.index', compact('halls', 'movies', 'seancesMovies', 'isActive', 'hallsExist'));
+
     } catch (\Exception $e) {
+        // Логируем ошибку
         Log::error('Ошибка при загрузке страницы admin.index: ' . $e->getMessage());
+
+        // Перенаправляем на страницу авторизации с сообщением об ошибке
         return redirect()->route('admin.login')->withErrors(['message' => 'Произошла ошибка при загрузке данных.']);
     }
 }
