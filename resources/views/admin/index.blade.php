@@ -62,10 +62,10 @@
                     </p>
                     <div class="conf-step__legend">
                         <label class="conf-step__label">Рядов, шт<input type="number" class="conf-step__input"
-                                placeholder="10" id="rows-input"></label>
+                                placeholder="10" id="rows-input" min="1"></label>
                         <span class="multiplier">x</span>
                         <label class="conf-step__label">Мест, шт<input type="number" class="conf-step__input"
-                                placeholder="8" id="seats-per-row-input"></label>
+                                placeholder="8" id="seats-per-row-input" min="1"></label>
                     </div>
 
                     <p class="conf-step__paragraph">Теперь вы можете указать типы кресел на схеме зала:</p>
@@ -75,7 +75,10 @@
                         <span class="conf-step__chair conf-step__chair_disabled"></span> — заблокированные (нет кресла)
                         <p class="conf-step__hint">Чтобы изменить вид кресла, нажмите по нему левой кнопкой мыши</p>
                     </div>
-
+                    <!-- Прогресс-бар перед схемой зала -->
+                    <div id="progress-bar-container" style="display: none; margin-top: 20px;">
+                        <div id="progress-bar"></div>
+                    </div>
                     <div class="conf-step__hall">
                         <div class="conf-step__hall-wrapper" id="hall-scheme">
                             <!-- Схема зала будет генерироваться динамически -->
@@ -149,6 +152,15 @@
                 <h2 class="conf-step__title">Сетка сеансов</h2>
             </header>
             <div class="conf-step__wrapper">
+
+                <!-- Навигация по датам -->
+                <div class="conf-step__date-navigation">
+                    <button class="conf-step__button conf-step__button-regular" id="prev-day">← Предыдущий день</button>
+                    <span class="conf-step__button conf-step__button-accent"
+                        id="current-date">{{ date('Y-m-d') }}</span>
+                    <button class="conf-step__button conf-step__button-regular" id="next-day">Следующий день →</button>
+                </div>
+
                 <!-- Добавление фильма -->
                 <p class="conf-step__paragraph">
                     <button class="conf-step__button conf-step__button-accent" id="add-movie-button">
@@ -200,11 +212,12 @@
                                             </div>
 
                                             <!-- Таймлайн сеансов -->
-                                            <div class="conf-step__seances-timeline">
-                                                @foreach ($hall->seancesMovies()->orderBy('start_time')->get() as $seance)
-                                                    <div class="conf-step__seances-movie" style="width: {{ $seance->movie->duration / 60 * 60 }}px; 
-                                                       background-color: rgb({{ rand(133, 255) }}, {{ rand(200, 255) }}, {{ rand(133, 255) }}); 
-                                                       left: {{ $seance->start_time_minutes * 6 }}px;">
+                                            <div class="conf-step__seances-timeline" data-hall-id="{{ $hall->id }}">
+                                                @foreach ($hall->seancesMovies()->whereDate('start_time', today())->orderBy('start_time')->get() as $seance)
+                                                    <div class="conf-step__seances-movie"
+                                                        style="width: {{ $seance->movie->duration / 60 * $minuteToPixelRatio }}px; 
+                                                               left: {{ ($seance->start_time_minutes - 600) * $minuteToPixelRatio }}px; 
+                                                               background-color: rgb({{ rand(133, 255) }}, {{ rand(200, 255) }}, {{ rand(133, 255) }});">
                                                         <p class="conf-step__seances-movie-title">{{ $seance->movie->title }}</p>
                                                         <p class="conf-step__seances-movie-start">{{ $seance->start_time_formatted }}</p>
                                                         <p class="conf-step__seances-movie-end">{{ $seance->end_time_formatted }}</p>
@@ -224,12 +237,23 @@
                 </fieldset>
             </div>
         </section>
-
         <!-- Открыть продажи -->
         <section class="conf-step">
             <header class="conf-step__header conf-step__header_opened">
                 <h2 class="conf-step__title">Открыть продажи</h2>
             </header>
+            <div class="conf-step__wrapper">
+                <p class="conf-step__paragraph">Выберите зал для открытия продажи билетов:</p>
+                <ul class="conf-step__selectors-box">
+                    @foreach ($halls as $hall)
+                        <li>
+                            <input type="radio" class="conf-step__radio" name="hall_id" value="{{ $hall->id }}"
+                                data-hall-id="{{ $hall->id }}" data-is-active="{{ $hall->is_active }}">
+                            <span class="conf-step__selector">{{ $hall->name }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
             <div class="conf-step__wrapper text-center">
                 <p class="conf-step__paragraph">Всё готово, теперь можно:</p>
 
@@ -247,8 +271,8 @@
             <div class="conf-step__wrapper text-center">
                 <!-- Кнопка выхода -->
                 <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">
-                @csrf <!-- Добавляем CSRF токен -->
-                <button type="submit" class="conf-step__button conf-step__button-regular">Выход</button>
+                    @csrf <!-- Добавляем CSRF токен -->
+                    <button type="submit" class="conf-step__button conf-step__button-regular">Выход</button>
                 </form>
             </div>
         </section>

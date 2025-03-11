@@ -28,6 +28,8 @@
                 <div class="buying__info-description">
                     <!-- Информация о фильме -->
                     <h2 class="buying__info-title">{{ $seance->movie?->title ?? 'Неизвестный фильм' }}</h2>
+                    <p class="buying__info-start">Дата сеанса:
+                        {{ \Carbon\Carbon::parse($seance->start_time)->format('d.m.Y') }}</p>
                     <p class="buying__info-start">Начало сеанса:
                         {{ \Carbon\Carbon::parse($seance->start_time)->format('H:i') }}</p>
                     <p class="buying__info-hall">{{ $seance->hall?->name ?? 'Неизвестный зал' }}</p>
@@ -40,34 +42,34 @@
             <div class="buying-scheme">
                 <div class="buying-scheme__wrapper">
                     @for ($row = 1; $row <= $rows; $row++)
-                                    <div class="buying-scheme__row">
-                                        @for ($seatInRow = 1; $seatInRow <= $seats_per_row; $seatInRow++)
-                                                            @php
-                                                                // Вычисляем глобальный номер места
-                                                                $globalSeatNumber = ($row - 1) * $seats_per_row + $seatInRow;
-                                                                // Находим конфигурацию для данного места
-                                                                $seatConfig = $hallConfiguration[array_search($globalSeatNumber, array_column($hallConfiguration, 'global_seat'))] ?? null;
-                                                                // Определяем класс места
-                                                                $seatClass = 'buying-scheme__chair';
-                                                                if ($seatConfig) {
-                                                                    if ($seatConfig['type'] === 'vip') {
-                                                                        $seatClass .= ' buying-scheme__chair_vip';
-                                                                    } elseif ($seatConfig['type'] === 'disabled') {
-                                                                        $seatClass .= ' buying-scheme__chair_disabled';
-                                                                    } else {
-                                                                        $seatClass .= ' buying-scheme__chair_standart';
-                                                                    }
-                                                                    // Проверяем, занято ли место
-                                                                    if (in_array((string) $globalSeatNumber, $occupiedSeats)) {
-                                                                        $seatClass .= ' buying-scheme__chair_taken';
-                                                                    }
-                                                                } else {
-                                                                    $seatClass .= ' buying-scheme__chair_disabled'; // Если конфигурация не найдена, место отключено
-                                                                }
-                                                            @endphp
-                                                            <span class="{{ $seatClass }}" data-seat="{{ $globalSeatNumber }}"></span>
-                                        @endfor
-                                    </div>
+                        <div class="buying-scheme__row">
+                            @for ($seatInRow = 1; $seatInRow <= $seats_per_row; $seatInRow++)
+                                @php
+                                    // Вычисляем глобальный номер места
+                                    $globalSeatNumber = ($row - 1) * $seats_per_row + $seatInRow;
+                                    // Находим конфигурацию для данного места
+                                    $seatConfig = $hallConfiguration[array_search($globalSeatNumber, array_column($hallConfiguration, 'global_seat'))] ?? null;
+                                    // Определяем класс места
+                                    $seatClass = 'buying-scheme__chair';
+                                    if ($seatConfig) {
+                                        if ($seatConfig['type'] === 'vip') {
+                                            $seatClass .= ' buying-scheme__chair_vip';
+                                        } elseif ($seatConfig['type'] === 'disabled') {
+                                            $seatClass .= ' buying-scheme__chair_disabled';
+                                        } else {
+                                            $seatClass .= ' buying-scheme__chair_standart';
+                                        }
+                                        // Проверяем, занято ли место
+                                        if (in_array((string) $globalSeatNumber, $occupiedSeats)) {
+                                            $seatClass .= ' buying-scheme__chair_taken';
+                                        }
+                                    } else {
+                                        $seatClass .= ' buying-scheme__chair_disabled'; // Если конфигурация не найдена, место отключено
+                                    }
+                                @endphp
+                                <span class="{{ $seatClass }}" data-seat="{{ $globalSeatNumber }}"></span>
+                            @endfor
+                        </div>
                     @endfor
                 </div>
                 <!-- Легенда -->

@@ -674,3 +674,20 @@ textarea.conf-step__input {
   background-color: #aaa; /* Цвет линии */
   transform: translateX(-50%); /* Центрирование линии */
 }
+#progress-bar-container {
+  width: 100%;
+  background: #f3f3f3;
+  border-radius: 25px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: 8px;
+  margin-bottom: 20px; /* Отступ между прогресс-баром и схемой зала */
+}
+
+#progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #89639e, #BC95D6);
+  border-radius: 25px;
+  transition: width 0.3s ease-in-out;
+}

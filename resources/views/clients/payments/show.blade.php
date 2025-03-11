@@ -23,7 +23,7 @@
 
     <main>
         <section class="ticket">
-            <header class="ticket__check">
+            <header class="tichet__check">
                 <h2 class="ticket__check-title">Вы выбрали билет:</h2>
             </header>
 
@@ -34,6 +34,9 @@
                         class="ticket__details ticket__chairs">{{ $payment->ticket->seat_list }}</span></p>
                 <p class="ticket__info">В зале: <span
                         class="ticket__details ticket__hall">{{ $payment->seancesMovie->hall->name }}</span></p>
+                <p class="ticket__info">Дата сеанса: <span
+                        class="ticket__details ticket__start">{{ \Carbon\Carbon::parse($payment->seancesMovie->start_time)->format('d.m.Y') }}</span>
+                </p>
                 <p class="ticket__info">Начало сеанса: <span
                         class="ticket__details ticket__start">{{ $payment->seancesMovie->start_time->format('H:i') }}</span>
                 </p>

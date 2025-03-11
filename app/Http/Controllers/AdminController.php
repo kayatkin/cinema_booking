@@ -42,47 +42,47 @@ class AdminController extends Controller
     }
 
     public function logout(Request $request)
-{
-    if (Auth::guard('admin')->check()) {
-        Log::info('Администратор вышел: ' . Auth::guard('admin')->user()->email);
-        Auth::guard('admin')->logout();
+    {
+        if (Auth::guard('admin')->check()) {
+            Log::info('Администратор вышел: ' . Auth::guard('admin')->user()->email);
+            Auth::guard('admin')->logout();
+        }
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login');
     }
 
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
+    public function index()
+    {
+        try {
+            // Получаем все доступные залы с их сеансами и фильмами
+            $halls = Hall::with('seancesMovies.movie')->get();
 
-    return redirect()->route('admin.login');
-}
+            // Получаем все фильмы
+            $movies = Movie::all();
 
-public function index()
-{
-    try {
-        // Получаем все доступные залы с их сеансами и фильмами
-        $halls = Hall::with('seancesMovies.movie')->get();
+            // Получаем все сеансы с их фильмами и залами, сортируем по времени
+            $seancesMovies = SeancesMovie::with('movie', 'hall')->orderBy('start_time')->get();
 
-        // Получаем все фильмы
-        $movies = Movie::all();
+            // Проверяем, есть ли вообще залы
+            $hallsExist = $halls->isNotEmpty();
 
-        // Получаем все сеансы с их фильмами и залами, сортируем по времени
-        $seancesMovies = SeancesMovie::with('movie', 'hall')->orderBy('start_time')->get();
+            // Проверяем, активен ли хотя бы один зал (если есть залы)
+            $isActive = $hallsExist ? $halls->first()->is_active : false;
 
-        // Проверяем, есть ли вообще залы
-        $hallsExist = $halls->isNotEmpty();
+            // Возвращаем представление с данными
+            return view('admin.index', compact('halls', 'movies', 'seancesMovies', 'isActive', 'hallsExist'));
 
-        // Проверяем, активен ли хотя бы один зал (если есть залы)
-        $isActive = $hallsExist ? $halls->first()->is_active : false;
+        } catch (\Exception $e) {
+            // Логируем ошибку
+            Log::error('Ошибка при загрузке страницы admin.index: ' . $e->getMessage());
 
-        // Возвращаем представление с данными
-        return view('admin.index', compact('halls', 'movies', 'seancesMovies', 'isActive', 'hallsExist'));
-
-    } catch (\Exception $e) {
-        // Логируем ошибку
-        Log::error('Ошибка при загрузке страницы admin.index: ' . $e->getMessage());
-
-        // Перенаправляем на страницу авторизации с сообщением об ошибке
-        return redirect()->route('admin.login')->withErrors(['message' => 'Произошла ошибка при загрузке данных.']);
+            // Перенаправляем на страницу авторизации с сообщением об ошибке
+            return redirect()->route('admin.login')->withErrors(['message' => 'Произошла ошибка при загрузке данных.']);
+        }
     }
-}
 
     /**
      * Сохраням новый зал в базу данных (упрощенное создание, только название).
@@ -255,7 +255,7 @@ public function index()
     /**
      * Создает новый сеанс через AJAX.
      */
-    public function createSeance(Request $request)
+    public function createSeance(Request $request, $date)
     {
         try {
             // Валидация входных данных
@@ -269,8 +269,8 @@ public function index()
             $movie = Movie::findOrFail($validatedData['movie_id']);
             $duration = $movie->duration; // Продолжительность фильма в минутах
 
-            // Преобразуем start_time в объект Carbon (с текущей датой)
-            $startTime = Carbon::today()->setTimeFromTimeString($validatedData['start_time']);
+            // Преобразуем start_time в объект Carbon с указанной датой
+            $startTime = Carbon::createFromFormat('Y-m-d H:i', "$date {$validatedData['start_time']}");
             $endTime = $startTime->copy()->addMinutes($duration);
 
             // Проверяем пересечение с существующими сеансами
@@ -317,51 +317,75 @@ public function index()
     }
 
     /**
-     * Сохраняем список сеансов.
+     * Сохраняем список сеансов для конкретной даты.
      */
-    public function store(Request $request)
+    public function storeSeances(Request $request)
     {
-        $data = $request->validate([
-            'seances' => 'required|array',
-            'seances.*.hall_id' => 'required|integer|exists:halls,id',
-            'seances.*.movie_id' => 'required|integer|exists:movies,id',
-            'seances.*.start_time' => 'required|string',
-            'seances.*.end_time' => 'required|string',
-        ]);
-
-        foreach ($data['seances'] as $seanceData) {
-            SeancesMovie::create([
-                'movie_id' => $seanceData['movie_id'],
-                'hall_id' => $seanceData['hall_id'],
-                'start_time' => Carbon::parse($seanceData['start_time']),
-                'end_time' => Carbon::parse($seanceData['end_time']),
+        try {
+            Log::info("Полученные данные:", $request->all());
+    
+            $data = $request->validate([
+                'seances' => 'required|array',
+                'seances.*.hall_id' => 'required|integer|exists:halls,id',
+                'seances.*.movie_id' => 'required|integer|exists:movies,id',
+                'seances.*.start_time' => 'required|date_format:Y-m-d H:i', // Формат: "YYYY-MM-DD HH:MM"
+                'seances.*.end_time' => 'required|date_format:Y-m-d H:i',  // Формат: "YYYY-MM-DD HH:MM"
+                'date' => 'required|date', // Формат: "YYYY-MM-DD"
             ]);
+    
+            Log::info("Валидированные данные:", $data);
+    
+            foreach ($data['seances'] as $seanceData) {
+                Log::info("Создание сеанса:", $seanceData);
+    
+                // Используем Carbon::parse для преобразования строки в объект Carbon
+                $startTime = Carbon::parse($seanceData['start_time']);
+                $endTime = Carbon::parse($seanceData['end_time']);
+    
+                SeancesMovie::create([
+                    'movie_id' => $seanceData['movie_id'],
+                    'hall_id' => $seanceData['hall_id'],
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                ]);
+            }
+    
+            return response()->json(['message' => 'Сеансы успешно сохранены!']);
+        } catch (\Exception $e) {
+            Log::error("Ошибка при сохранении сеансов: " . $e->getMessage());
+            return response()->json(['message' => 'Произошла ошибка при сохранении сеансов.'], 500);
         }
-
-        return response()->json(['message' => 'Сеансы успешно сохранены!']);
     }
 
     /**
-     * Загружаем список всех сеансов.
+     * Загружаем список всех сеансов для конкретной даты.
      */
-    public function loadSeances()
+    public function loadSeances(Request $request)
     {
-        $seances = SeancesMovie::with('movie')->get()->map(function ($seance) {
-            $startTime = Carbon::parse($seance->start_time);
-            $endTime = $startTime->copy()->addMinutes($seance->movie->duration);
+        $date = $request->input('date');
+        $seances = SeancesMovie::with('movie')
+            ->whereDate('start_time', $date)
+            ->get()
+            ->map(function ($seance) {
+                $startTime = Carbon::parse($seance->start_time);
+                $endTime = $startTime->copy()->addMinutes($seance->movie->duration);
 
-            return [
-                'id' => $seance->id,
-                'hall_id' => $seance->hall_id,
-                'movie_id' => $seance->movie_id,
-                'movie_title' => $seance->movie->title,
-                'start_time' => $startTime->format('H:i'),
-                'end_time' => $endTime->format('H:i'),
-            ];
-        });
+                return [
+                    'id' => $seance->id,
+                    'hall_id' => $seance->hall_id,
+                    'movie_id' => $seance->movie_id,
+                    'movie_title' => $seance->movie->title,
+                    'start_time' => $startTime->format('H:i'),
+                    'end_time' => $endTime->format('H:i'),
+                ];
+            });
 
         return response()->json($seances);
     }
+
+    /**
+     * Удаляем сеанс по ID.
+     */
     public function deleteSeance(Request $request, $id)
     {
         try {
@@ -383,8 +407,9 @@ public function index()
             ], 500);
         }
     }
+
     /**
-     * Создаем новый фильм.
+     * Создаем новый фильм с возможностью указания периода проката.
      */
     public function createMovie(Request $request)
     {
@@ -394,6 +419,8 @@ public function index()
             'synopsis' => 'nullable|string', // Описание фильма (опционально)
             'origin' => 'nullable|string', // Страна производства (опционально)
             'poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Постер (опционально)
+            'start_of_release' => 'nullable|date', // Начало проката
+            'end_of_release' => 'nullable|date|after_or_equal:start_of_release', // Конец проката
         ]);
 
         // Если загружен постер, сохраняем его
@@ -413,26 +440,32 @@ public function index()
             'movie' => $movie, // Возвращаем данные созданного фильма
         ], 200);
     }
-
     /**
      * Возвращаем данные о фильме для редактирования.
      */
     public function getMovieForEdit($movie_id)
-    {
-        $movie = Movie::findOrFail($movie_id);
+{
+    $movie = Movie::findOrFail($movie_id);
 
-        return response()->json([
-            'success' => true,
-            'movie' => [
-                'id' => $movie->id,
-                'title' => $movie->title,
-                'duration' => $movie->duration,
-                'synopsis' => $movie->synopsis,
-                'origin' => $movie->origin,
-                'poster_path' => $movie->poster_path,
-            ],
-        ], 200);
-    }
+    // Преобразуем строки в объекты Carbon, если они не null
+    $startOfRelease = $movie->start_of_release ? Carbon::parse($movie->start_of_release) : null;
+    $endOfRelease = $movie->end_of_release ? Carbon::parse($movie->end_of_release) : null;
+
+    return response()->json([
+        'success' => true,
+        'movie' => [
+            'id' => $movie->id,
+            'title' => $movie->title,
+            'duration' => $movie->duration,
+            'synopsis' => $movie->synopsis,
+            'origin' => $movie->origin,
+            'poster_path' => $movie->poster_path,
+            'start_of_release' => $startOfRelease ? $startOfRelease->format('Y-m-d') : null,
+            'end_of_release' => $endOfRelease ? $endOfRelease->format('Y-m-d') : null,
+        ],
+    ], 200);
+}
+
     /**
      * Обновляем данные о фильме.
      */
@@ -444,6 +477,8 @@ public function index()
             'synopsis' => 'nullable|string',
             'origin' => 'nullable|string',
             'poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'start_of_release' => 'nullable|date', // Начало проката
+            'end_of_release' => 'nullable|date|after_or_equal:start_of_release', // Конец проката
         ]);
 
         $movie = Movie::findOrFail($movie_id);
@@ -472,7 +507,7 @@ public function index()
         ], 200);
     }
 
-    /**
+     /**
      * Удаляем фильм из базы данных.
      */
     public function deleteMovie($movie_id)
@@ -511,19 +546,71 @@ public function index()
             ], 500);
         }
     }
+    
+    /**
+     * Генерируем сеансы для периода проката фильма.
+     */
+    public function generateSeancesForReleasePeriod(Request $request)
+    {
+        $validatedData = $request->validate([
+            'movie_id' => 'required|exists:movies,id',
+            'hall_id' => 'required|exists:halls,id',
+            'start_time' => 'required|date_format:H:i',
+        ]);
+
+        $movie = Movie::findOrFail($validatedData['movie_id']);
+        $startDate = $movie->start_of_release;
+        $endDate = $movie->end_of_release;
+
+        if (!$startDate || !$endDate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Период проката не указан.',
+            ], 400);
+        }
+
+        $currentTime = clone $startDate;
+        while ($currentTime->lte($endDate)) {
+            $startTime = Carbon::createFromFormat('Y-m-d H:i', "$currentTime {$validatedData['start_time']}");
+            $endTime = $startTime->copy()->addMinutes($movie->duration);
+
+            SeancesMovie::create([
+                'movie_id' => $validatedData['movie_id'],
+                'hall_id' => $validatedData['hall_id'],
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ]);
+
+            $currentTime->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Сеансы успешно созданы для периода проката!',
+        ], 200);
+    }
     public function toggleSales(Request $request)
     {
-        // Получаем текущий статус всех залов
-        $currentStatus = Hall::first()->is_active ?? false;
-
-        // Инвертируем статус для всех залов
-        Hall::query()->update(['is_active' => !$currentStatus]);
-
+        // Валидация входных данных
+        $request->validate([
+            'hall_id' => 'required|exists:halls,id',
+        ]);
+    
+        // Получаем ID зала из запроса
+        $hallId = $request->input('hall_id');
+    
+        // Находим зал
+        $hall = Hall::findOrFail($hallId);
+    
+        // Инвертируем статус для выбранного зала
+        $newStatus = !$hall->is_active;
+        $hall->update(['is_active' => $newStatus]);
+    
         // Возвращаем новый статус и текст кнопки
         return response()->json([
             'success' => true,
-            'is_active' => !$currentStatus,
-            'button_text' => !$currentStatus ? 'Приостановить продажу билетов' : 'Открыть продажу билетов',
+            'is_active' => $newStatus,
+            'button_text' => $newStatus ? 'Приостановить продажу билетов' : 'Открыть продажу билетов',
         ]);
     }
 }

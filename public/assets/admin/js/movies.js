@@ -1,3 +1,10 @@
+console.log("Элементы DOM:", {
+    addMovieButton: document.getElementById("add-movie-button"),
+    addMovieModal: document.getElementById("add-movie-modal"),
+    addMovieOverlay: document.getElementById("movie-modal-overlay"),
+    closeAddMovieModalButton: document.getElementById("close-movie-modal-button"),
+    addMovieForm: document.getElementById("add-movie-form"),
+});
 document.addEventListener("DOMContentLoaded", function () {
     // Элементы для добавления фильма
     const addMovieButton = document.getElementById("add-movie-button");
@@ -9,18 +16,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const addMovieForm = document.getElementById("add-movie-form");
 
     // Проверяем существование элементов
-    if (
-        !addMovieButton ||
-        !addMovieModal ||
-        !addMovieOverlay ||
-        !closeAddMovieModalButton ||
-        !addMovieForm
-    ) {
-        console.error(
-            "Не все необходимые элементы найдены для модального окна добавления фильма.",
-        );
+    if (!addMovieButton || !addMovieModal || !addMovieOverlay || !closeAddMovieModalButton || !addMovieForm) {
+        console.error("Отсутствующие элементы:", {
+            addMovieButton,
+            addMovieModal,
+            addMovieOverlay,
+            closeAddMovieModalButton,
+            addMovieForm
+        });
         return;
     }
+    
 
     // Открытие модального окна добавления фильма
     addMovieButton.addEventListener("click", function () {
@@ -77,34 +83,48 @@ document.addEventListener("DOMContentLoaded", function () {
     const editMovieForm = document.getElementById("edit-movie-form");
 
     // Проверяем существование элементов
-    if (
-        !editMovieModal ||
-        !editMovieOverlay ||
-        !closeEditMovieModalButton ||
-        !editMovieForm
-    ) {
-        console.error(
-            "Не все необходимые элементы найдены для модального окна редактирования фильма.",
-        );
+    if (!addMovieButton || !addMovieModal || !addMovieOverlay || !closeAddMovieModalButton || !addMovieForm) {
+        console.error("Отсутствующие элементы:", {
+            addMovieButton,
+            addMovieModal,
+            addMovieOverlay,
+            closeAddMovieModalButton,
+            addMovieForm
+        });
         return;
     }
+    
 
     // Функция для открытия модального окна редактирования фильма
     function openEditModal(movieId) {
+        console.log("Открытие модального окна для фильма с ID:", movieId); // Отладочное сообщение
+    
         fetch(`/admin/movies/${movieId}/edit`)
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
             .then((data) => {
                 if (data.success) {
-                    document.getElementById("movie-id").value = data.movie.id;
-                    document.getElementById("movie-title").value =
-                        data.movie.title;
-                    document.getElementById("movie-duration").value =
-                        data.movie.duration;
-                    document.getElementById("movie-synopsis").value =
-                        data.movie.synopsis;
-                    document.getElementById("movie-origin").value =
-                        data.movie.origin;
-
+                    const movie = data.movie;
+                    console.log("Данные фильма:", movie); // Отладочное сообщение
+    
+                    // Заполняем форму данными фильма
+                    document.getElementById("movie-id").value = movie.id;
+                    document.getElementById("movie-title").value = movie.title;
+                    document.getElementById("movie-duration").value = movie.duration;
+                    document.getElementById("movie-synopsis").value = movie.synopsis;
+                    document.getElementById("movie-origin").value = movie.origin;
+    
+                    // Заполняем новые поля датами проката
+                    document.getElementById("movie-start-of-release").value =
+                        movie.start_of_release || "";
+                    document.getElementById("movie-end-of-release").value =
+                        movie.end_of_release || "";
+    
+                    // Открываем модальное окно
                     editMovieModal.classList.remove("hidden");
                     editMovieOverlay.classList.remove("hidden");
                 } else {
@@ -169,7 +189,8 @@ document.addEventListener("DOMContentLoaded", function () {
             closeEditMovieModals();
         }
     });
-    //логика удаления фильма
+
+    // Логика удаления фильма
     document.addEventListener("click", async function (event) {
         if (event.target && event.target.id === "delete-movie-button") {
             const movieId = document.getElementById("movie-id").value;
@@ -182,18 +203,15 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!confirm("Вы уверены, что хотите удалить этот фильм?")) return;
 
             try {
-                const response = await fetch(
-                    `/admin/movies/${movieId}/delete`,
-                    {
-                        method: "DELETE",
-                        headers: {
-                            "X-CSRF-TOKEN": document
-                                .querySelector('meta[name="csrf-token"]')
-                                .getAttribute("content"),
-                            "Content-Type": "application/json",
-                        },
+                const response = await fetch(`/admin/movies/${movieId}/delete`, {
+                    method: "DELETE",
+                    headers: {
+                        "X-CSRF-TOKEN": document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute("content"),
+                        "Content-Type": "application/json",
                     },
-                );
+                });
 
                 const data = await response.json();
 
