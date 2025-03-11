@@ -94,7 +94,7 @@ class Ticket extends Model
      * @return string
      * @throws Exception
      */
-    public function generateQrCodeFile()
+     public function generateQrCodeFile()
     {
         if (!$this->qr_code_path) {
             try {
@@ -108,23 +108,32 @@ class Ticket extends Model
 
                 // Путь к файлу QR-кода
                 $qrCodePath = "qrcodes/{$this->unique_code}.png";
-
-                // Создаем директорию, если она не существует
-                if (!Storage::exists('qrcodes')) {
-                    Storage::makeDirectory('qrcodes');
+                $fullPath = public_path("storage/$qrCodePath"); // Сохраняем в публичную папку
+                
+                
+               // Создаем директорию "qrcodes", если она не существует
+            if (!Storage::disk('public')->exists('qrcodes')) {
+                Storage::disk('public')->makeDirectory('qrcodes');
                 }
 
-                // Генерируем QR-код
-                \QRcode::png(
-                    $qrCodeData, // Данные для QR-кода
-                    storage_path("app/public/$qrCodePath"), // Путь сохранения
-                    'L', // Уровень коррекции ошибок
-                    4, // Масштаб изображения
-                    0 // Отступы вокруг QR-кода
-                );
+               // Генерируем QR-код во временный файл
+            $tempPath = tempnam(sys_get_temp_dir(), 'qr');
+            \QRcode::png(
+                $qrCodeData, // Данные для QR-кода
+                $tempPath, // Временный файл
+                'L', // Уровень коррекции ошибок
+                4, // Масштаб изображения
+                0 // Отступы вокруг QR-кода
+            );
 
+            // Сохраняем QR-код в папку "qrcodes"
+            Storage::disk('public')->put($qrCodePath, file_get_contents($tempPath));
+
+            // Удаляем временный файл
+            unlink($tempPath);
+            
                 // Сохраняем путь к QR-коду в базе данных
-                $this->update(['qr_code_path' => $qrCodePath]);
+                $this->update(['qr_code_path' => str_replace('public/', '', $qrCodePath)]);
 
                 Log::info('QR code generated successfully:', ['ticket_id' => $this->id, 'path' => $qrCodePath]);
             } catch (Exception $e) {
