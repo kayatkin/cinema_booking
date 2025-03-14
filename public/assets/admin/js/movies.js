@@ -1,19 +1,15 @@
-console.log("Элементы DOM:", {
-    addMovieButton: document.getElementById("add-movie-button"),
-    addMovieModal: document.getElementById("add-movie-modal"),
-    addMovieOverlay: document.getElementById("movie-modal-overlay"),
-    closeAddMovieModalButton: document.getElementById("close-movie-modal-button"),
-    addMovieForm: document.getElementById("add-movie-form"),
-});
 document.addEventListener("DOMContentLoaded", function () {
     // Элементы для добавления фильма
     const addMovieButton = document.getElementById("add-movie-button");
     const addMovieModal = document.getElementById("add-movie-modal");
     const addMovieOverlay = document.getElementById("movie-modal-overlay");
-    const closeAddMovieModalButton = document.getElementById(
-        "close-movie-modal-button",
-    );
+    const closeAddMovieModalButton = document.getElementById("close-movie-modal-button");
     const addMovieForm = document.getElementById("add-movie-form");
+    const posterInput = document.getElementById("movie-poster");
+    const posterPreview = document.querySelector(".popup__poster");
+    // Кнопка закрытия через иконку (крестик)
+    const dismissButton = document.querySelector("#add-movie-modal .popup__dismiss");
+    const dismissButtonEdit = document.querySelector("#edit-movie-modal .popup__dismiss");
 
     // Проверяем существование элементов
     if (!addMovieButton || !addMovieModal || !addMovieOverlay || !closeAddMovieModalButton || !addMovieForm) {
@@ -26,21 +22,61 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         return;
     }
-    
+
+    // Логируем элементы DOM
+    console.log("Элементы DOM:", {
+        addMovieButton,
+        addMovieModal,
+        addMovieOverlay,
+        closeAddMovieModalButton,
+        addMovieForm,
+        dismissButton
+    });
+
+    console.log("Poster input:", posterInput);
+    console.log("Poster preview:", posterPreview);
+
+    // Функция для закрытия модального окна
+    function closeAddMovieModals() {
+        addMovieModal.classList.add("hidden");
+        addMovieOverlay.classList.add("hidden");
+        console.log("Модальное окно закрыто.");
+    }
 
     // Открытие модального окна добавления фильма
     addMovieButton.addEventListener("click", function () {
         addMovieModal.classList.remove("hidden");
         addMovieOverlay.classList.remove("hidden");
+        console.log("Модальное окно открыто.");
     });
 
-    // Закрытие модального окна добавления фильма
-    function closeAddMovieModals() {
-        addMovieModal.classList.add("hidden");
-        addMovieOverlay.classList.add("hidden");
-    }
+    // Закрытие модального окна по кнопке "Отменить"
     closeAddMovieModalButton.addEventListener("click", closeAddMovieModals);
+
+    // Закрытие модального окна по клику на затемнённый фон
     addMovieOverlay.addEventListener("click", closeAddMovieModals);
+
+    // Закрытие модального окна по нажатию иконки закрытия (крестик)
+    dismissButton?.addEventListener("click", function (event) {
+        event.preventDefault(); // Предотвращаем действие по умолчанию для ссылки
+        closeAddMovieModals();
+        console.log("Модальное окно закрыто через иконку закрытия.");
+    });
+// Закрытие модального окна редактирования фильма по нажатию иконки закрытия (крестик)
+dismissButtonEdit?.addEventListener("click", function (event) {
+    event.preventDefault(); // Предотвращаем действие по умолчанию для ссылки
+    closeEditMovieModals();
+    console.log("Модальное окно закрыто через иконку закрытия.");
+});
+    // Закрытие модального окна по нажатию клавиши Escape
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !addMovieModal.classList.contains("hidden")) {
+            closeAddMovieModals();
+            console.log("Модальное окно закрыто через клавишу Escape.");
+        }
+    });
+
+
 
     // Отправка формы создания фильма
     addMovieForm.addEventListener("submit", async function (event) {
@@ -60,9 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 location.reload(); // Обновляем страницу после успешного создания
             } else {
                 const errorData = await response.json();
-                alert(
-                    `Ошибка: ${errorData.message || "Не удалось создать фильм."}`,
-                );
+                alert(`Ошибка: ${errorData.message || "Не удалось создать фильм."}`);
             }
         } catch (error) {
             console.error("Произошла ошибка:", error);
@@ -71,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
             closeAddMovieModals();
         }
     });
+
 
     // Элементы для редактирования фильма
     const editMovieModal = document.getElementById("edit-movie-modal");
@@ -158,6 +193,22 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
+
+  
+posterInput.addEventListener("change", function (event) {
+    const file = event.target.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            posterPreview.innerHTML = `<img src="${e.target.result}" alt="Превью постера" class="popup__poster">`;
+        };
+
+        reader.readAsDataURL(file);
+    }
+});
+
 
     // Отправка формы редактирования фильма
     editMovieForm.addEventListener("submit", async function (event) {

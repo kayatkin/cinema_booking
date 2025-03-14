@@ -18,8 +18,25 @@ document.addEventListener("DOMContentLoaded", function () {
         overlay?.classList.add("hidden");
     }
 
+    // Закрытие по кнопке "Отменить"
     closeModalButton?.addEventListener("click", closeModals);
+
+    // Закрытие по клику на затемнённый фон
     overlay?.addEventListener("click", closeModals);
+
+    // Закрытие по иконке закрытия (крестик)
+    const dismissButton = document.querySelector("#create-hall-modal .popup__dismiss");
+    dismissButton?.addEventListener("click", function (event) {
+        event.preventDefault(); // Предотвращаем действие по умолчанию для ссылки
+        closeModals();
+    });
+
+    // Закрытие по нажатию клавиши Escape
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.classList.contains("hidden")) {
+            closeModals();
+        }
+    });
 
     // Отправка формы создания зала
     createHallForm?.addEventListener("submit", async function (event) {
